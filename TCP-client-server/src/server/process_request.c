@@ -7,15 +7,17 @@ char* insert_d(char *request, sqlite3 *db) {
 	printf("data: %s", data);
 	int a = insert_music(db, data);
 	if (a == 0) {
-		return "ERROR\n";
+		return "ERROR: inserting data\n";
 	}	
-	return data;
+	return "SUCCESSFULL INSERT";
 }
 
 
 char* delete_d(char *request, sqlite3 *db) {
-	char *reponse = strtok(NULL, "\n");
-	return "DELETE";
+	char *id = strtok(NULL, "\n");
+        if (delete_music(db, id)) 
+		return "ERROR: deleting data\n";
+	return "DELETE id ";
 }
 
 char* select_d(char *request, sqlite3 *db) {
@@ -30,12 +32,10 @@ char* select_d(char *request, sqlite3 *db) {
 	}
 
 	char *response = (char *) malloc(1024 * sizeof(char));
+	
+	if (select_music(db, toselect, tofilter, response)) 
+		return "ERROR: selecting data";
 
-	if (tofilter != NULL) {
-		sprintf(response, "FIELDS %s\nFILTER %s\n", toselect, tofilter);
-	} else {
-		sprintf(response, "FIELDS %s\n", toselect);
-	}
 
 	return response;
 
