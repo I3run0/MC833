@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "request_hendler.h"
+#include "tcp_exchange_message_wrapper.h"
 
 #define PORT "3490"  // the port users will be connecting to
 
@@ -127,7 +127,15 @@ int main(void)
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-			request_hendler(new_fd);
+			
+			printf("message Created\n");
+			struct message * msg;
+			if (!init_message_w(msg)) exit(1);
+			for(;;) {	
+				if (recv_message_w(new_fd, msg) <= 0) exit(1);
+				send_message_w(new_fd, msg);	
+			}
+
 			close(new_fd);
 			exit(0);
 		}
