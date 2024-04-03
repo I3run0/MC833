@@ -1,24 +1,24 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define BUFFERLEN 1024
-#define ENDTOKEN "\r\r"
+#define SIZEBUFFER 200
 
-struct message {
-    char message[BUFFERLEN];
+struct  message
+{
+    char *message;
     int len;
 };
 
-
-struct message *create_message_w();
+struct message * create_message_w();
 
 int recv_message_w(int sockfd, struct message *msg);
 
 void send_message_w(int sockfd, struct message *msg);
 
-int free_messge_w(int sockfd, struct message *msg);
+int free_message_w(struct message *msg);

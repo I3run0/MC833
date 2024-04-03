@@ -15,7 +15,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "tcp_exchange_message_wrapper.h"
+#include "../../libs/exchange_message_wrapper/tcp_exchange_message_wrapper.h"
+#include "process_request.h"
 
 #define PORT "3490"  // the port users will be connecting to
 
@@ -129,10 +130,12 @@ int main(void)
 			close(sockfd); // child doesn't need the listener
 			
 			printf("message Created\n");
-			struct message *msg = (struct message *)malloc(sizeof(struct message));
+			struct message *msg = create_message_w();
 			for(;;) {	
 				recv_message_w(new_fd, msg);
-				printf("Chegou aqui");
+				char *response = process_request(msg->message);
+				strcpy(msg->message, response);
+				msg->len = strlen(msg->message);
 				send_message_w(new_fd, msg);	
 			}
 

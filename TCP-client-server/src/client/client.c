@@ -7,8 +7,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#define BUF_SIZE 1024
-#define ENDTOKEN "\n\r\n\r"
+#include "../../libs/exchange_message_wrapper/tcp_exchange_message_wrapper.h"
 
 int main(int argc, char *argv[]) {
     int socketfd, rv;
@@ -45,20 +44,20 @@ int main(int argc, char *argv[]) {
     printf("Client connect to %s\n", argv[1]);
 
     int nsend = 0, msg_size = 0;
-    char msg[BUF_SIZE];
-    char recv_msg[BUF_SIZE];
+    char msg[2000];
+    char recv_msg[200];
     for(;;) { 
-	nsend = 0;
-	printf(">>> ");
-        fgets(msg, BUF_SIZE, stdin);
-	printf("%ld %s", strlen(msg), msg);
-        while(nsend != BUF_SIZE) {
-            nsend = send(socketfd, msg, BUF_SIZE, 0);
-            //printf("client: sent %d/%d\n", nsend, BUF_SIZE);
-	}
-	send(socketfd, "\r\r", BUF_SIZE, 0);
-        recv(socketfd, recv_msg, BUF_SIZE, 0);
-        printf("%s", recv_msg);
+        nsend = 0;
+        printf(">>> ");
+        fgets(msg, 2000, stdin);
+        struct message *msg_struc = create_message_w();
+        strcpy(msg_struc->message, msg);
+        msg_struc->len = strlen(msg);
+        //printf("%ld %s", msg_struc->len, msg_struc->message);
+        send_message_w(socketfd, msg_struc);
+        recv_message_w(socketfd, msg_struc);
+        printf("%s", msg_struc->message);
+
     }
     return 0;
 }
