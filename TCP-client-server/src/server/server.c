@@ -129,10 +129,10 @@ int main(void)
 			close(sockfd); // child doesn't need the listener
 			
 			printf("message Created\n");
-			struct message * msg;
-			if (!init_message_w(msg)) exit(1);
+			struct message *msg = (struct message *)malloc(sizeof(struct message));
 			for(;;) {	
-				if (recv_message_w(new_fd, msg) <= 0) exit(1);
+				recv_message_w(new_fd, msg);
+				printf("Chegou aqui");
 				send_message_w(new_fd, msg);	
 			}
 

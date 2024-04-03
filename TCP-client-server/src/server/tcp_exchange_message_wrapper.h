@@ -6,16 +6,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define BUFFERLEN 4016
+#define BUFFERLEN 1024
 #define ENDTOKEN "\r\r"
 
 struct message {
-    char * message;
+    char message[BUFFERLEN];
     int len;
 };
 
 
-int init_message_w(struct message * msg);
+struct message *create_message_w();
 
 int recv_message_w(int sockfd, struct message *msg);
 
