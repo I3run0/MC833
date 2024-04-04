@@ -45,8 +45,23 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(void)
-{
+sqlite3 * get_db_instance(char * db_path) {
+	sqlite3 *db;
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        return NULL;
+    }
+
+   	if (create_music_table(db)) {
+		return NULL;
+	}
+
+	return db;
+}
+
+int main(int argc, char *argv[])
+{	
+	sqlite3 *server_database = get_db_instance(argv[1]);
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
 	struct addrinfo hints, *servinfo, *p;
 	struct sockaddr_storage their_addr; // connector's address information
@@ -131,12 +146,14 @@ int main(void)
 			
 			printf("message Created\n");
 			struct message *msg = create_message_w();
+			char *response;
 			for(;;) {	
 				recv_message_w(new_fd, msg);
-				char *response = process_request(msg->message);
-				strcpy(msg->message, response);
+				response = process_request(server_database, msg->message);
+				printf("%s", response);
+				memcpy(msg->message, response, strlen(response) + 1);
 				msg->len = strlen(msg->message);
-				send_message_w(new_fd, msg);	
+				send_message_w(new_fd, msg);
 			}
 
 			close(new_fd);

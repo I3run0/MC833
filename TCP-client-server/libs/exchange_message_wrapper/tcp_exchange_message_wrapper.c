@@ -35,7 +35,6 @@ int recv_message_w(int sockfd, struct message *msg) {
 	char *tofree = msg->message;
 	msg->message = new_message;
 	msg->len = msg_len_torecv_i;
-
 	free(tofree);
 }
 
