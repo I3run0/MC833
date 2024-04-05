@@ -1,13 +1,5 @@
 #include "tcp_exchange_message_wrapper.h"
 
-struct message * create_message_w() {
-    struct message * msg = (struct message *) malloc(sizeof(struct message));
-    if (msg == NULL) return NULL;
-	msg->message = (char *) malloc(1000 * sizeof(char));
-	msg->len = 0;
-    return msg;
-}
-
 int _recv_message_w(int sockfd, char * buffer, int len) {
 	ssize_t r = 0;
 	ssize_t nrecv = 0;
@@ -22,44 +14,35 @@ int _recv_message_w(int sockfd, char * buffer, int len) {
 	return nrecv;
 }
 
-int recv_message_w(int sockfd, struct message *msg) {
+char * recv_message_w(int sockfd) {
 	int msg_len_torecv_i;
 	char msg_len_torecv_c[SIZEBUFFER];
 
-	if (_recv_message_w(sockfd, msg_len_torecv_c, SIZEBUFFER) <= 0) return 0;
+	if (_recv_message_w(sockfd, msg_len_torecv_c, SIZEBUFFER) <= 0) return NULL;
 	msg_len_torecv_i = atoi(msg_len_torecv_c);
 
-	char *new_message = (char *) malloc((msg_len_torecv_i + 1) * sizeof(char));
-	if (_recv_message_w(sockfd, new_message, msg_len_torecv_i) <= 0) return 0;
-
-	char *tofree = msg->message;
-	msg->message = new_message;
-	msg->len = msg_len_torecv_i;
-	free(tofree);
+	char *msg = (char *) malloc((msg_len_torecv_i + 1) * sizeof(char));
+	if (_recv_message_w(sockfd, msg, msg_len_torecv_i) <= 0) return NULL;
+	return msg;
 }
 
 void _send_message_w(int sockfd, char *msg, int len) {
 	int nsent = 0;
 
-	char *msgtosend = (char *)malloc(len * sizeof(char));
+	char *msgtosend = (char *)malloc((len + 1)  * sizeof(char));
 	strcpy(msgtosend, msg);
 
 	while (nsent != len) {
         nsent += send(sockfd, msgtosend + nsent, len - nsent, 0); 
     }	
-
+	
 	free(msgtosend);
 }
 
-void send_message_w(int sockfd, struct message *msg) {
+void send_message_w(int sockfd, char *msg, int len) {
 	char msg_len_tosend_c[SIZEBUFFER];
 	
-	sprintf(msg_len_tosend_c, "%d", msg->len);
+	sprintf(msg_len_tosend_c, "%d", len);
 	_send_message_w(sockfd, msg_len_tosend_c, SIZEBUFFER);
-	_send_message_w(sockfd, msg->message, msg->len);
-}
-
-int free_message_w(struct message *msg) {
-	free(msg->message);
-	free(msg);
+	_send_message_w(sockfd, msg, len);
 }

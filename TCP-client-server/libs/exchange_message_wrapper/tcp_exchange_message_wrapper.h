@@ -9,16 +9,6 @@
 
 #define SIZEBUFFER 200
 
-struct  message
-{
-    char *message;
-    int len;
-};
+char *recv_message_w(int sockfd);
 
-struct message * create_message_w();
-
-int recv_message_w(int sockfd, struct message *msg);
-
-void send_message_w(int sockfd, struct message *msg);
-
-int free_message_w(struct message *msg);
+void send_message_w(int sockfd, char *msg, int len);

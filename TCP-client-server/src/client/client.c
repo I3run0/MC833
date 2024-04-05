@@ -39,25 +39,22 @@ int main(int argc, char *argv[]) {
 
     if (p == NULL) {
         fprintf(stderr, "client: failed to connect\n");
+        exit(1);
     }
 
     printf("Client connect to %s\n", argv[1]);
 
     int nsend = 0, msg_size = 0;
     char msg[2000];
-    char recv_msg[200];
+    char *recv_msg;
     for(;;) { 
         nsend = 0;
         printf(">>> ");
         fgets(msg, 2000, stdin);
-        struct message *msg_struc = create_message_w();
-        strcpy(msg_struc->message, msg);
-        msg_struc->len = strlen(msg);
-        //printf("%ld %s", msg_struc->len, msg_struc->message);
-        send_message_w(socketfd, msg_struc);
-        recv_message_w(socketfd, msg_struc);
-        printf("%s", msg_struc->message);
-
+        send_message_w(socketfd, msg, strlen(msg));
+        recv_msg = recv_message_w(socketfd);
+        printf("\n%s", recv_msg);
+        free(recv_msg);
     }
     return 0;
 }
