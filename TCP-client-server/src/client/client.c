@@ -22,19 +22,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    for(p = serveaddr; p != NULL; p = p->ai_next) {
+    for (p = serveaddr; p != NULL; p = p->ai_next) {
         if ((socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-        perror("client: socket");
-        continue;
-    }
+            perror("client: socket");
+            continue;
+        }
 
-    if (connect(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
-        close(socketfd);
-        perror("client: connect");
-        continue;
-    }
+        if (connect(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(socketfd);
+            perror("client: connect");
+            continue;
+        }
 
-    break;
+        break;
     }
 
     if (p == NULL) {
@@ -42,13 +42,11 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    printf("Client connect to %s\n", argv[1]);
+    printf("Client connected to %s\n", argv[1]);
 
-    int nsend = 0, msg_size = 0;
     char msg[2000];
     char *recv_msg;
-    for(;;) { 
-        nsend = 0;
+    for (;;) {
         printf(">>> ");
         fgets(msg, 2000, stdin);
         send_message_w(socketfd, msg, strlen(msg));

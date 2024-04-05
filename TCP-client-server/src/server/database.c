@@ -1,30 +1,27 @@
-// database.c
 #include "database.h"
 
-
-
 int create_music_table(sqlite3 *db) {
-    char *sql = "CREATE TABLE IF NOT EXISTS musica ("
-                "id TEXT,"
-                "titulo TEXT,"
-                "interprete TEXT,"
-                "idioma TEXT,"
-                "tipo_de_musica TEXT,"
-                "refrao TEXT,"
-                "ano_de_lancamento TEXT"
-                ");";
-    int result = sqlite3_exec(db, sql, 0, 0, 0);
+    const char *sql = "CREATE TABLE IF NOT EXISTS musica ("
+                      "id TEXT,"
+                      "titulo TEXT,"
+                      "interprete TEXT,"
+                      "idioma TEXT,"
+                      "tipo_de_musica TEXT,"
+                      "refrao TEXT,"
+                      "ano_de_lancamento TEXT"
+                      ");";
+    int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     return result;
 }
 
-int insert_music(sqlite3 *db, char *data) {
-    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento) VALUES (%s);", data);
-    int result = sqlite3_exec(db, sql, 0, 0, 0);
+int insert_music(sqlite3 *db, const char *data) {
+    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento) VALUES ('%q');", data);
+    int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;
 }
 
-int select_music(sqlite3 *db, char *fields, char *filter, char *result) {
+int select_music(sqlite3 *db, const char *fields, const char *filter, char *result) {
     char *sql;
     if (filter == NULL) {
         sql = sqlite3_mprintf("SELECT %s FROM musica;", fields);
@@ -33,7 +30,7 @@ int select_music(sqlite3 *db, char *fields, char *filter, char *result) {
     }
 
     sqlite3_stmt *stmt;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         sqlite3_free(sql);
         return rc;
@@ -53,9 +50,9 @@ int select_music(sqlite3 *db, char *fields, char *filter, char *result) {
     return SQLITE_OK;
 }
 
-int delete_music(sqlite3 *db, char *id) {
-    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id=%s;", id);
-    int result = sqlite3_exec(db, sql, 0, 0, 0);
+int delete_music(sqlite3 *db, const char *id) {
+    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id='%q';", id);
+    int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;
 }
