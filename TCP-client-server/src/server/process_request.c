@@ -51,10 +51,11 @@ char* select_d(char *request, sqlite3 *db) {
 }
 
 char* help_d() {
-    char* help_message = "HELP_D:\n"
-                         "Available operations:\n"
+    char* help_message = "Available operations:\n"
                          "INSERT: Insert data into the database\n"
-                         "    Syntax: INSERT data\n"
+                         "    Syntax: INSERT '<id>', '<titulo>', '<interprete>', '<idioma>', '<tipo_de_musica>', '<refrao>', '<ano_de_lancamento>', \n"
+                         "    Examples:\n"
+                         "        INSERT 'a', 'b', 'c', 'd', 'f', 'g', 'h'\n";
                          "DELETE: Delete data from the database\n"
                          "    Syntax: DELETE id\n"
                          "SELECT: Select data from the database\n"
@@ -85,6 +86,8 @@ char* process_request(sqlite3 *db, char *request) {
         response = select_d(local_request, db);
     } else if (strcmp(op, "DELETE") == 0) {
 		response = delete_d(local_request, db);
+    } else if (strcmp(op, "HELP")) {
+        response = help_d(local_request, db);
     } else {
 		response = strdup("ERROR: TO_PROCESS_REQUEST: Invalid operation specified in the request\n");
 	}
