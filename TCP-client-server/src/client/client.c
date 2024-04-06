@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
         fgets(msg, 2000, stdin);
         send_message_w(socketfd, msg, strlen(msg));
         recv_msg = recv_message_w(socketfd);
-        printf("\n%s", recv_msg);
+        printf("%s", recv_msg);
         free(recv_msg);
     }
     return 0;

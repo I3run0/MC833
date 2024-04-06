@@ -15,7 +15,7 @@ int create_music_table(sqlite3 *db) {
 }
 
 int insert_music(sqlite3 *db, const char *data) {
-    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento) VALUES ('%q');", data);
+    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento) VALUES (%s);", data);
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;
@@ -33,21 +33,28 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         sqlite3_free(sql);
-        return rc;
+        return -1;
     }
 
+    rc = 0;
+    int len;
+    result[0] = '\0';
+    strcat(result, "\n");
+    result += strlen(result);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         for (int i = 0; i < sqlite3_column_count(stmt); i++) {
-            sprintf(result, "%s: %s ", sqlite3_column_name(stmt, i), sqlite3_column_text(stmt, i));
+            sprintf(result, "%s: %s\n", sqlite3_column_name(stmt, i), sqlite3_column_text(stmt, i));
             result += strlen(result);
         }
         strcat(result, "\n");
-        result += strlen(result);
+        len = strlen(result);
+        result += len;
+        rc += len;
     }
 
     sqlite3_finalize(stmt);
     sqlite3_free(sql);
-    return SQLITE_OK;
+    return rc;
 }
 
 int delete_music(sqlite3 *db, const char *id) {
