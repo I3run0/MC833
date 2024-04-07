@@ -36,6 +36,14 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+// get sin_port, IPv4 or IPv6:
+uint16_t get_in_port(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+    return (((struct sockaddr_in6*)sa)->sin6_port);
+}
+
 sqlite3 *get_db_instance(char *db_path) {
     sqlite3 *db;
     if (sqlite3_open(db_path, &db) != SQLITE_OK) {
@@ -134,22 +142,23 @@ int main(int argc, char *argv[]) {
         }
 
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
-        printf("server: got connection from %s\n", s);
+        int port = ntohs(get_in_port((struct sockaddr *)&their_addr));
+        printf("server: got connection from %s:%d\n", s, port);
 
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
-
             char *msg;
             char *response;
             for (;;) {
                 msg = recv_message_w(new_fd);
-                if (msg == NULL) exit(EXIT_FAILURE);
+                if (msg == NULL) break;
                 response = process_request(server_database, msg);
                 send_message_w(new_fd, response, strlen(response));
                 free(msg);
                 free(response);
             }
-
+            
+            printf("server: finished connection with %s:%d\n", s, port);
             close(new_fd);
             exit(EXIT_SUCCESS);
         }

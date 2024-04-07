@@ -58,14 +58,14 @@ char* help_d() {
                          "    Examples:\n"
                          "        INSERT 'a', 'b', 'c', 'd', 'f', 'g', 'h'\n"
                          "DELETE: Delete data from the database\n"
-                         "    Syntax: DELETE id\n"
+                         "    Syntax: DELETE <id>\n"
                          "SELECT: Select data from the database\n"
                          "    Syntax: SELECT columns WHERE filter\n"
                          "            OR\n"
                          "            SELECT columns\n"
                          "    Examples:\n"
-                         "        SELECT * WHERE id='5'\n"
-                         "        SELECT title, artist WHERE genre='Rock'\n"
+                         "        SELECT * WHERE id='<value>'\n"
+                         "        SELECT title, artist WHERE genre='<value>'\n"
                          "\n";
     return strdup(help_message);
 }
