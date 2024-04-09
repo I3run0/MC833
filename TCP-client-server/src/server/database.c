@@ -2,7 +2,7 @@
 
 int create_music_table(sqlite3 *db) {
     const char *sql = "CREATE TABLE IF NOT EXISTS musica ("
-                      "id TEXT,"
+                      "id TEXT NOT NULL UNIQUE,"
                       "titulo TEXT,"
                       "interprete TEXT,"
                       "idioma TEXT,"

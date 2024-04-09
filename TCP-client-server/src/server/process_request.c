@@ -1,5 +1,5 @@
 #include "process_request.h"
-#define RESPONSE_BUFFER_SIZE 1024
+#define RESPONSE_BUFFER_SIZE 100000
 
 char* insert_d(char *request, sqlite3 *db) {
     char *data = strtok(NULL, "\n");
