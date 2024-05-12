@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_socktype = SOCK_DGRAM;
 
     if ((rv = getaddrinfo(argv[1], argv[2], &hints, &serveaddr)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -25,12 +25,6 @@ int main(int argc, char *argv[]) {
     for (p = serveaddr; p != NULL; p = p->ai_next) {
         if ((socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
-            continue;
-        }
-
-        if (connect(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(socketfd);
-            perror("client: connect");
             continue;
         }
 
@@ -49,8 +43,8 @@ int main(int argc, char *argv[]) {
     for (;;) {
         printf(">>> ");
         fgets(msg, 2000, stdin);
-        send_message_w(socketfd, msg, strlen(msg));
-        recv_msg = recv_message_w(socketfd);
+        send_message_w(socketfd, msg, strlen(msg), p->ai_addr, p->ai_addrlen);
+        recv_msg = recv_message_w(socketfd, p->ai_addr, &(p->ai_addrlen));
         printf("%s", recv_msg);
         free(recv_msg);
     }

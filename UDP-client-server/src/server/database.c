@@ -9,6 +9,7 @@ int create_music_table(sqlite3 *db) {
                       "tipo_de_musica TEXT,"
                       "refrao TEXT,"
                       "ano_de_lancamento TEXT",
+                      "caminho TEXT"
                       ");";
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     return result;
@@ -44,7 +45,7 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         for (int i = 0; i < sqlite3_column_count(stmt); i++) {
             sprintf(result, "%s: %s\n", sqlite3_column_name(stmt, i), sqlite3_column_text(stmt, i));
-            result += strlen(result);
+
         }
         strcat(result, "\n");
         len = strlen(result);
@@ -57,8 +58,32 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
     return rc;
 }
 
+int select_music_path(sqlite3 *db, const char *id, char *result) {
+     char *sql;
+    if (id == NULL) {
+        sql = sqlite3_mprintf("SELECT %s FROM musica WHERE id='%s';", id);
+        return -1;
+    }
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        sqlite3_free(sql);
+        return -1;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        sprintf(result, "%s", sqlite3_column_text(stmt, 0));
+        result += strlen(result);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_free(sql);
+    return 1;
+}
+
 int delete_music(sqlite3 *db, const char *id) {
-    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id='%q';", id);
+    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id='%s';", id);
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;

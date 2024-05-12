@@ -11,7 +11,7 @@
 
 #define SIZEBUFFER 200
 
-char *recv_message_w(int sockfd);
-void send_message_w(int sockfd, const char *msg, int len);
+char *recv_message_w(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+void send_message_w(int sockfd, const char *msg, int len, struct sockaddr *addr, socklen_t addrlen);
 
 #endif /* TCP_EXCHANGE_MESSAGE_WRAPPER_H */

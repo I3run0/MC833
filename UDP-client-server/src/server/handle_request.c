@@ -70,8 +70,8 @@ char* help_d() {
     return strdup(help_message);
 }
 
-char* process_request(sqlite3 *db, char *request) {
-	char *response;
+void handle_request(sqlite3 *db, char *request, int sockfd, struct sockaddr *addr) {
+	char *response = NULL;
     char *local_request = strdup(request);
     if (!local_request) {
         response = strdup("\nERROR: TO_PROCESS_REQUEST Memory allocation failed for local request buffer\n\n");
@@ -94,6 +94,13 @@ char* process_request(sqlite3 *db, char *request) {
 		response = strdup("\nERROR: TO_PROCESS_REQUEST: Invalid operation specified in the request\n\n");
 	}
 
+    if (response != NULL)
+        send_message_w(sockfd, response, strlen(response), &addr, sizeof addr);
+
+    if (strcmp(op, "DOWNLOAD") == 0) {
+
+    } else if (strcmp(op, "UPLOAD") == 0) {
+        
+    }
     free(local_request);
-    return response;
 }

@@ -6,12 +6,12 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-int _recv_message_w(int sockfd, char *buffer, int len) {
+int _recv_message_w(int sockfd, char *buffer, int len, struct sockaddr *addr, socklen_t *addrlen) {
     ssize_t r = 0;
     ssize_t nrecv = 0;
 
     while (nrecv < len) {
-        r = recv(sockfd, buffer + nrecv, len - nrecv, 0);
+        r = recvfrom(sockfd, buffer + nrecv, len - nrecv, MSG_WAITALL, addr, addrlen);
         if (r <= 0) {
             return r;
         }
@@ -22,28 +22,28 @@ int _recv_message_w(int sockfd, char *buffer, int len) {
     return nrecv;
 }
 
-char *recv_message_w(int sockfd) {
+char *recv_message_w(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     int msg_len_torecv_i;
     char msg_len_torecv_c[SIZEBUFFER];
 
-    if (_recv_message_w(sockfd, msg_len_torecv_c, SIZEBUFFER) <= 0) {
+    if (_recv_message_w(sockfd, msg_len_torecv_c, SIZEBUFFER, addr, addrlen) <= 0) {
         return NULL;
     }
     msg_len_torecv_i = atoi(msg_len_torecv_c);
 
     char *msg = (char *)malloc((msg_len_torecv_i + 1) * sizeof(char));
-    if (_recv_message_w(sockfd, msg, msg_len_torecv_i) <= 0) {
+    if (_recv_message_w(sockfd, msg, msg_len_torecv_i, addr, addrlen) <= 0) {
         free(msg);
-        return NULL;
+        return NULL; 
     }
     return msg;
 }
 
-void _send_message_w(int sockfd, const char *msg, int len) {
+void _send_message_w(int sockfd, const char *msg, int len, struct sockaddr *addr, socklen_t addrlen) {
     int nsent = 0;
 
     while (nsent != len) {
-        int sent = send(sockfd, msg + nsent, len - nsent, 0);
+        int sent = sendto(sockfd, msg + nsent, len - nsent, MSG_CONFIRM, addr, addrlen);
         if (sent == -1) {
             perror("send");
             exit(EXIT_FAILURE);
@@ -52,9 +52,9 @@ void _send_message_w(int sockfd, const char *msg, int len) {
     }
 }
 
-void send_message_w(int sockfd, const char *msg, int len) {
+void send_message_w(int sockfd, const char *msg, int len, struct sockaddr *addr, socklen_t addrlen) {
     char msg_len_tosend_c[SIZEBUFFER];
     snprintf(msg_len_tosend_c, SIZEBUFFER, "%d", len);
-    _send_message_w(sockfd, msg_len_tosend_c, SIZEBUFFER);
-    _send_message_w(sockfd, msg, len);
+    _send_message_w(sockfd, msg_len_tosend_c, SIZEBUFFER, addr, addrlen);
+    _send_message_w(sockfd, msg, len, addr, addrlen);
 }
