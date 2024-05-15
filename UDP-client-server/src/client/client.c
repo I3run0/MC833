@@ -38,15 +38,24 @@ int main(int argc, char *argv[]) {
 
     printf("Client connected to %s\n", argv[1]);
 
-    char msg[2000];
-    char *recv_msg;
+    char request[2000];
+    char *response;
+
     for (;;) {
         printf(">>> ");
-        fgets(msg, 2000, stdin);
-        send_message_w(socketfd, msg, strlen(msg), p->ai_addr, p->ai_addrlen);
-        recv_msg = recv_message_w(socketfd, p->ai_addr, &(p->ai_addrlen));
-        printf("%s", recv_msg);
-        free(recv_msg);
+        fgets(request, 2000, stdin);
+
+        send_message_w(socketfd, request, strlen(request), p->ai_addr, p->ai_addrlen);
+        response = recv_message_w(socketfd, p->ai_addr, &(p->ai_addrlen));
+
+        if (strcmp(response, "INSERT") == 0) {
+            /* TO DO */
+        } else if (strcmp(response, "DOWNLOAD") == 0) {
+            /* TO DO */
+        }
+
+        printf("%s", response);
+        free(response);
     }
     return 0;
 }
