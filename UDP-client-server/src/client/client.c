@@ -44,16 +44,8 @@ int main(int argc, char *argv[]) {
     for (;;) {
         printf(">>> ");
         fgets(request, 2000, stdin);
-
         send_message_w(socketfd, request, strlen(request), p->ai_addr, p->ai_addrlen);
         response = recv_message_w(socketfd, p->ai_addr, &(p->ai_addrlen));
-
-        if (strcmp(response, "INSERT") == 0) {
-            /* TO DO */
-        } else if (strcmp(response, "DOWNLOAD") == 0) {
-            /* TO DO */
-        }
-
         printf("%s", response);
         free(response);
     }

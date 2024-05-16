@@ -8,8 +8,7 @@ int create_music_table(sqlite3 *db) {
                       "idioma TEXT,"
                       "tipo_de_musica TEXT,"
                       "refrao TEXT,"
-                      "ano_de_lancamento TEXT",
-                      "caminho TEXT",
+                      "ano_de_lancamento TEXT"
                       ");";
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     return result;
