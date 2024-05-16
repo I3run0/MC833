@@ -18,24 +18,28 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
     #define MAXFIELDSLEN 100
     int res;
     char id[MAXFIELDSLEN], title[MAXFIELDSLEN], singer[MAXFIELDSLEN],
-        language[MAXFIELDSLEN], lyrics[MAXFIELDSLEN], release_data[MAXFIELDSLEN],
+        language[MAXFIELDSLEN], lyrics[MAXFIELDSLEN], release_date[MAXFIELDSLEN],
         storage_path[MAXFIELDSLEN * 2];
-
+    
+    char* local_request = strdup(request);
     char response[RESPONSE_BUFFER_SIZE];
-    char *data = strtok(NULL, "\n");
-    res = sscanf(data, "%*[ ]%99[^,],%*[ ]%99[^,],%*[ ]%99[^,],%*[ ]%99[^,],%*[ ]%99[^,],%*[ ]%99[^,],%*[ ]%199s",
-               id, title, singer, language, lyrics, release_data, storage_path);
-    printf("%d\n", res);
-    if (!data || res < 7) { 
+  
+    res = sscanf(request, "INSERT '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%199[^']'\n",
+                 id, title, singer, language, lyrics, release_date, storage_path);
+
+    if (res < 7) { 
         strcpy(response, "\nERROR: INSERT: No data provided or data absent for insertion\n\n");
         send_message_w(sockfd, response, strlen(response), addr, addrlen);
         return;
     }
 
     sprintf(storage_path, "data/storage/%s.mp3", id);
-    char toinsert[strlen(data) +  MAXPATHLEN];
-    strcpy(toinsert, data);
-    int result = insert_music(db, data);
+    char* data_to_insert = (char *)malloc(strlen(local_request) + strlen(storage_path) + 1);
+    sprintf(data_to_insert, "'%s', '%s', '%s', '%s', '%s', '%s', '%s'",  
+                id, title, singer, language, lyrics, release_date, storage_path);
+
+    printf("%s\n", data_to_insert);
+    int result = insert_music(db, data_to_insert);
     if (result != SQLITE_OK) {
         strcpy(response, "\nERROR: INSERT: Failed to insert data into the database\n\n");
         send_message_w(sockfd, response, strlen(response), addr, addrlen);
@@ -45,31 +49,33 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
     strcpy(response, "INSERT"); // Init the file transferetion
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
     #undef MAXFIELDSLEN
+
+    free(local_request);
 }
 
-void delete_request(int sockfd, struct sockaddr *addr, char *request, sqlite3 *db) {
+void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
     char *id = strtok(NULL, "\n");
     char response[RESPONSE_BUFFER_SIZE]; 
     if (!id) {
         strcpy(response, "\nERROR: DELETE: No ID provided for deletion\n\n");
-        send_message_w(sockfd, response, strlen(response), addr, sizeof(addr));
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
         return;
     }
     int result = delete_music(db, id);
     if (result != SQLITE_OK) {
         strcpy(response, "\nERROR: DELETE: Failed to delete data from the database\n\n");
-        send_message_w(sockfd, response, strlen(response), addr, sizeof(addr));
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
         return;
     }
     strcpy(response, "\nSUCCESS: DELETE: Data deleted successfully\n\n");
-    send_message_w(sockfd, response, strlen(response), addr, sizeof(addr));
+    send_message_w(sockfd, response, strlen(response), addr, addrlen);
 }
 
-void download_request(int sockfd, struct sockaddr *addr, char *request, sqlite3 *db) {
+void download_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
     return;
 }
 
-void select_request(int sockfd, struct sockaddr *addr, char *request, sqlite3 *db) {
+void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *request, sqlite3 *db) {
     char *to_filter = NULL;
 	char *to_select = strtok(NULL, "WHERE");
     char *error = "\nERROR: SELECT: Failed to retrieve data from the database\n\n";
@@ -80,22 +86,24 @@ void select_request(int sockfd, struct sockaddr *addr, char *request, sqlite3 *d
 		to_filter = strtok(NULL, " ");
 		to_filter = strtok(NULL, "\n");
 	}
+    printf("%s\n", to_select);
     char *response = (char *)malloc(RESPONSE_BUFFER_SIZE * sizeof(char));
+ 
     if (!response) {
-        send_message_w(sockfd, error, strlen(error), addr, sizeof(addr));
-        return;
+        strcpy(response, error);
+        goto send;
     }
 
     int result = select_music(db, to_select, to_filter, response);
     if (result < 0) {
-        free(response);
-        send_message_w(sockfd, error, strlen(error), addr, sizeof(addr));
-        return;
+        strcpy(response, error);
     } else if (result == 0) {
-        char *nodata = "\nSELECT: There are no data in music database\n\n";
-        return;
+        strcpy(response, "\nSELECT: There are no data in music database\n\n");
     }
-    send_message_w(sockfd, response, strlen(response), addr, sizeof(addr));;
+
+send:
+    send_message_w(sockfd, response, strlen(response), addr, addrlen);;
+    free(response);
 }
 
 
@@ -126,23 +134,21 @@ void wrong_request(int sockfd, struct sockaddr *addr, socklen_t addrlen) {
 void hendle_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *request, sqlite3 *db) {
     char *local_request = strdup(request);
     char *op = strtok(local_request, " \n");
-    printf("%s", op);
     /* Select the request */
     if (strcmp(op, "HELP") == 0) {
-        printf("Send message call\n");
         help_request(sockfd, addr, addrlen);
     } else if (strcmp(op, "INSERT") == 0) {
-        insert_request(sockfd, addr, addrlen, local_request, db);
+        insert_request(sockfd, addr, addrlen, request, db);
     } else if (strcmp(op, "SELECT") == 0) {
-        select_request(sockfd, addr, local_request, db);
+        select_request(sockfd, addr, addrlen, local_request, db);
     } else if (strcmp(op, "DELETE") == 0) {
-        delete_request(sockfd, addr, local_request, db);
+        delete_request(sockfd, addr, addrlen, local_request, db);
     } else if (strcmp(op, "DOWNLOAD") == 0) {
-        download_request(sockfd, addr, local_request, db);
+        download_request(sockfd, addr, addrlen, local_request, db);
     } else {
-        printf("Send message call\n");
         wrong_request(sockfd, addr, addrlen);
     }
+    free(request);
 }
 
 sqlite3 *get_db_instance(char *db_path) {

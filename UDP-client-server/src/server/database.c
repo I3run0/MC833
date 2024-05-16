@@ -44,6 +44,7 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         for (int i = 0; i < sqlite3_column_count(stmt); i++) {
             sprintf(result, "%s: %s\n", sqlite3_column_name(stmt, i), sqlite3_column_text(stmt, i));
+            result += strlen(result);
         }
         strcat(result, "\n");
         len = strlen(result);
