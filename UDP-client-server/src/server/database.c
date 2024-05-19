@@ -57,8 +57,8 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
     return rc;
 }
 
-int select_path_by_id(sqlite3 *db, const char *id, char *caminho) {
-    char *sql = sqlite3_mprintf("SELECT caminho FROM musica WHERE id='%s';", id);
+int select_path_by_id(sqlite3 *db, const char *id, char *path) {
+    char *sql = sqlite3_mprintf("SELECT ano_de_lancamento FROM musica WHERE id='%s';", id);
     if (!sql) {
         return -1;
     }
@@ -71,14 +71,14 @@ int select_path_by_id(sqlite3 *db, const char *id, char *caminho) {
     }
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const unsigned char *caminho_value = sqlite3_column_text(stmt, 0);
-        if (caminho_value) {
-            strcpy(caminho, (const char *)caminho_value);
+        const unsigned char *path_value = sqlite3_column_text(stmt, 0);
+        if (path_value) {
+            strcpy(path, (const char *)path_value);
         } else {
-            caminho[0] = '\0';
+            return -1;
         }
     } else {
-        caminho[0] = '\0';
+        return -1;
     }
 
     sqlite3_finalize(stmt);

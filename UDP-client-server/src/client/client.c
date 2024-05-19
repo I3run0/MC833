@@ -6,8 +6,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
-#include "../../libs/exchange_message_wrapper/tcp_exchange_message_wrapper.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include "../../libs/udp_message_exchange_wrapper.h"
+#include "../../libs/udp_file_exchange_wrapper.h"
 
 int main(int argc, char *argv[]) {
     int socketfd, rv;
@@ -39,22 +41,36 @@ int main(int argc, char *argv[]) {
     printf("Client connected to %s\n", argv[1]);
 
     char request[2000];
-    char *response;
-
+    char *response, *opt, *rspns_dup;
     for (;;) {
         printf(">>> ");
         fgets(request, 2000, stdin);
         send_message_w(socketfd, request, strlen(request), p->ai_addr, p->ai_addrlen);
         response = recv_message_w(socketfd, p->ai_addr, &(p->ai_addrlen));
-        
-        if(strcmp(response, "INSERT") == 0) {
-            
-        } else if (strcmp(response, "DOWNLOAD") == 0) {
-            continue;
+        if (!response) {
+            printf("\nSERVER not responde\n\n");
+            exit(1);
         }
-
-        printf("%s", response);
+        rspns_dup = strdup(response);
+        opt = strtok(rspns_dup, " ");
+        if(strcmp(opt, "INSERT") == 0) {
+            char *path;
+            path = strtok(NULL, "\0");
+            send_file_w(socketfd, path, p->ai_addr, p->ai_addrlen);
+            printf("\nINSERT %s\n\n", path);
+        } else if (strcmp(opt, "DOWNLOAD") == 0) {
+            char *server_path, local_path[512];
+            server_path = strtok(NULL, "\0");
+            sscanf(server_path, "data/storage/%s", server_path);
+            strcpy(local_path, "client_data/storage/");
+            strcat(local_path, server_path);
+            recv_file_w(socketfd, local_path, p->ai_addr, p->ai_addrlen);
+            printf("\nDOWNLOAD in %s\n\n", local_path);
+        } else {
+            printf("%s", response);
+        }
         free(response);
+        free(rspns_dup);
     }
     return 0;
 }

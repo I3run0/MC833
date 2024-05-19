@@ -9,7 +9,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "database.h"
-#include "../../libs/exchange_message_wrapper/tcp_exchange_message_wrapper.h"
+#include "../../libs/udp_message_exchange_wrapper.h"
+#include "../../libs/udp_file_exchange_wrapper.h"
 
 #define RESPONSE_BUFFER_SIZE 100000
 #define MAXPATHLEN 1000
@@ -33,10 +34,11 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
         return;
     }
 
-    sprintf(storage_path, "data/storage/%s.mp3", id);
-    char* data_to_insert = (char *)malloc(strlen(local_request) + strlen(storage_path) + 1);
+    char local_storage_path[MAXFIELDSLEN * 2];
+    sprintf(local_storage_path, "server_data/storage/%s.mp3", id);
+    char* data_to_insert = (char *)malloc(strlen(local_request) + strlen(local_storage_path) + 1);
     sprintf(data_to_insert, "'%s', '%s', '%s', '%s', '%s', '%s', '%s'",  
-                id, title, singer, language, lyrics, release_date, storage_path);
+                id, title, singer, language, lyrics, release_date, local_storage_path);
 
     printf("%s\n", data_to_insert);
     int result = insert_music(db, data_to_insert);
@@ -46,11 +48,39 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
         return;
     }
 
-    strcpy(response, "INSERT"); // Init the file transferetion
+    sprintf(response, "INSERT %s", storage_path); // Init the file transferetion
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
+    recv_file_w(sockfd, local_storage_path, addr, addrlen);
     #undef MAXFIELDSLEN
-
     free(local_request);
+}
+
+void download_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
+    char *id = strtok(NULL, "\n");
+    char response[RESPONSE_BUFFER_SIZE];
+    char path[256];
+    if (!id) {
+        strcpy(response, "\nERROR: DOWNLOAD: No ID provided for download\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
+    if (select_path_by_id(db, id, path) < 0) {
+        strcpy(response, "\nERROR: DOWNLOAD: ID not found\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
+    if (access(path, F_OK) != 0) {
+        strcpy(response, "\nERROR: DOWNLOAD: File associeted to id not foud\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
+    /* Init the file transfertion */
+    sprintf(response, "DOWNLOAD %s", path);
+    send_message_w(sockfd, response, strlen(response), addr, addrlen);
+    send_file_w(sockfd, path, addr, addrlen);
 }
 
 void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
@@ -71,10 +101,6 @@ void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* 
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
 }
 
-void download_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
-    return;
-}
-
 void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *request, sqlite3 *db) {
     char *to_filter = NULL;
 	char *to_select = strtok(NULL, "WHERE");
@@ -86,8 +112,8 @@ void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
 		to_filter = strtok(NULL, " ");
 		to_filter = strtok(NULL, "\n");
 	}
-    printf("%s\n", to_select);
-    char *response = (char *)malloc(RESPONSE_BUFFER_SIZE * sizeof(char));
+
+    char response[RESPONSE_BUFFER_SIZE];
  
     if (!response) {
         strcpy(response, error);
@@ -102,8 +128,7 @@ void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
     }
 
 send:
-    send_message_w(sockfd, response, strlen(response), addr, addrlen);;
-    free(response);
+    send_message_w(sockfd, response, strlen(response), addr, addrlen);
 }
 
 
@@ -134,6 +159,10 @@ void wrong_request(int sockfd, struct sockaddr *addr, socklen_t addrlen) {
 void hendle_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *request, sqlite3 *db) {
     char *local_request = strdup(request);
     char *op = strtok(local_request, " \n");
+    if (!op) {
+        wrong_request(sockfd, addr, addrlen);
+        return;
+    }
     /* Select the request */
     if (strcmp(op, "HELP") == 0) {
         help_request(sockfd, addr, addrlen);
@@ -183,7 +212,7 @@ int main(int argc, char *argv[]) {
     struct addrinfo hints, *servinfo, *p;
     int rv;
     int numbytes;
-    struct sockaddr client_addr;
+     struct sockaddr_storage client_addr;
     socklen_t client_addrlen;
     socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
@@ -236,9 +265,12 @@ int main(int argc, char *argv[]) {
     printf("listener: waiting to recvfrom...\n");
 
     while(1) {
-        char* msg = recv_message_w(sockfd, &client_addr, &client_addrlen);
-        printf("%s\n", msg);
-        hendle_request(sockfd, &client_addr, client_addrlen, msg, server_database);
+        char* msg = recv_message_w(sockfd, (struct sockaddr *)&client_addr, &client_addrlen);
+        printf("listener: got packet from %s\n",
+        inet_ntop(client_addr.ss_family,
+            get_in_addr((struct sockaddr *)&client_addrlen),
+            s, sizeof s));
+        hendle_request(sockfd, (struct sockaddr *)&client_addr, client_addrlen, msg, server_database);
     }
     close(sockfd);
 

@@ -13,6 +13,7 @@ int select_music(
     const char* fields,
     const char* filter,
     char* result);
+int select_path_by_id(sqlite3 *db, const char *id, char *caminho);
 int delete_music(sqlite3* db, const char* id);
 
 #endif /* DATABASE_H */

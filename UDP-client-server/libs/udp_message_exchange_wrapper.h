@@ -1,5 +1,5 @@
-#ifndef TCP_EXCHANGE_MESSAGE_WRAPPER_H
-#define TCP_EXCHANGE_MESSAGE_WRAPPER_H
+#ifndef UDP_MESSAGE_EXCHANGE_WRAPPER_H
+#define UDP_MESSAGE_EXCHANGE_WRAPPER_H
 
 #include <errno.h>
 #include <stdio.h>
@@ -8,10 +8,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/time.h>
 
-#define SIZEBUFFER 200
-
+#define TIMEOUT_SEC 5
+#define BUFFERSIZE 200
+ 
 char *recv_message_w(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 void send_message_w(int sockfd, const char *msg, int len, struct sockaddr *addr, socklen_t addrlen);
 
-#endif /* TCP_EXCHANGE_MESSAGE_WRAPPER_H */
+#endif /* UDP_MESSAGE_EXCHANGE_WRAPPER_H */
