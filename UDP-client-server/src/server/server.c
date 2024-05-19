@@ -85,12 +85,32 @@ void download_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char
 
 void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
     char *id = strtok(NULL, "\n");
-    char response[RESPONSE_BUFFER_SIZE]; 
+    char response[RESPONSE_BUFFER_SIZE];
+    char path[256];
     if (!id) {
         strcpy(response, "\nERROR: DELETE: No ID provided for deletion\n\n");
         send_message_w(sockfd, response, strlen(response), addr, addrlen);
         return;
     }
+
+    if (select_path_by_id(db, id, path) < 0) {
+        strcpy(response, "\nERROR: DELETE: ID not found\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
+    if (access(path, F_OK) != 0) {
+        strcpy(response, "\nERROR: DELETE: File associeted to id not foud\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
+    if (remove(path) != 0) {
+        strcpy(response, "\nERROR: DELETE: Is not possible delete the song file\n\n");
+        send_message_w(sockfd, response, strlen(response), addr, addrlen);
+        return;
+    }
+
     int result = delete_music(db, id);
     if (result != SQLITE_OK) {
         strcpy(response, "\nERROR: DELETE: Failed to delete data from the database\n\n");
