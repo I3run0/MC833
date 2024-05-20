@@ -61,8 +61,8 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(opt, "DOWNLOAD") == 0) {
             char *server_path, local_path[512];
             server_path = strtok(NULL, "\0");
-            sscanf(server_path, "data/storage/%s", server_path);
-            strcpy(local_path, "client_data/storage/");
+            sscanf(server_path, "server_data/storage/%s", server_path);
+            strcpy(local_path, "client_data/storage_download/");
             strcat(local_path, server_path);
             recv_file_w(socketfd, local_path, p->ai_addr, p->ai_addrlen);
             printf("\nDOWNLOAD in %s\n\n", local_path);

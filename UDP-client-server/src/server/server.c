@@ -13,22 +13,19 @@
 #include "../../libs/udp_file_exchange_wrapper.h"
 
 #define RESPONSE_BUFFER_SIZE 100000
-#define MAXPATHLEN 1000
+#define MAXFIELDSLEN 256
 
 void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *request, sqlite3 *db) {
-    #define MAXFIELDSLEN 100
     int res;
     char id[MAXFIELDSLEN], title[MAXFIELDSLEN], singer[MAXFIELDSLEN],
-        language[MAXFIELDSLEN], lyrics[MAXFIELDSLEN], release_date[MAXFIELDSLEN],
-        storage_path[MAXFIELDSLEN * 2];
+        language[MAXFIELDSLEN], type[MAXFIELDSLEN], lyrics[MAXFIELDSLEN],
+        release_date[MAXFIELDSLEN], storage_path[MAXFIELDSLEN * 2];
     
     char* local_request = strdup(request);
     char response[RESPONSE_BUFFER_SIZE];
-  
-    res = sscanf(request, "INSERT '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%199[^']'\n",
-                 id, title, singer, language, lyrics, release_date, storage_path);
-
-    if (res < 7) { 
+    res = sscanf(request, "INSERT '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%99[^']' '%199[^']'\n",
+                 id, title, singer, language, type, lyrics, release_date, storage_path);
+    if (res < 8) { 
         strcpy(response, "\nERROR: INSERT: No data provided or data absent for insertion\n\n");
         send_message_w(sockfd, response, strlen(response), addr, addrlen);
         return;
@@ -37,10 +34,9 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
     char local_storage_path[MAXFIELDSLEN * 2];
     sprintf(local_storage_path, "server_data/storage/%s.mp3", id);
     char* data_to_insert = (char *)malloc(strlen(local_request) + strlen(local_storage_path) + 1);
-    sprintf(data_to_insert, "'%s', '%s', '%s', '%s', '%s', '%s', '%s'",  
-                id, title, singer, language, lyrics, release_date, local_storage_path);
+    sprintf(data_to_insert, "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'",  
+                id, title, singer, language, type, lyrics, release_date, local_storage_path);
 
-    printf("%s\n", data_to_insert);
     int result = insert_music(db, data_to_insert);
     if (result != SQLITE_OK) {
         strcpy(response, "\nERROR: INSERT: Failed to insert data into the database\n\n");
@@ -51,7 +47,6 @@ void insert_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
     sprintf(response, "INSERT %s", storage_path); // Init the file transferetion
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
     recv_file_w(sockfd, local_storage_path, addr, addrlen);
-    #undef MAXFIELDSLEN
     free(local_request);
 }
 
@@ -86,7 +81,8 @@ void download_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char
 void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* request, sqlite3 *db) {
     char *id = strtok(NULL, "\n");
     char response[RESPONSE_BUFFER_SIZE];
-    char path[256];
+    char path[MAXFIELDSLEN];
+
     if (!id) {
         strcpy(response, "\nERROR: DELETE: No ID provided for deletion\n\n");
         send_message_w(sockfd, response, strlen(response), addr, addrlen);
@@ -134,12 +130,6 @@ void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
 	}
 
     char response[RESPONSE_BUFFER_SIZE];
- 
-    if (!response) {
-        strcpy(response, error);
-        goto send;
-    }
-
     int result = select_music(db, to_select, to_filter, response);
     if (result < 0) {
         strcpy(response, error);
@@ -147,7 +137,6 @@ void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
         strcpy(response, "\nSELECT: There are no data in music database\n\n");
     }
 
-send:
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
 }
 
@@ -231,10 +220,8 @@ int main(int argc, char *argv[]) {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int numbytes;
-     struct sockaddr_storage client_addr;
+    struct sockaddr_storage client_addr;
     socklen_t client_addrlen;
-    socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
 
     if (argc != 2) {

@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -Wall -Werror
 LIBS = -lsqlite3
 
-CLIENT_SRC = src/client/client.c libs/exchange_message_wrapper/tcp_exchange_message_wrapper.c
-SERVER_SRC = src/server/server.c src/server/database.c src/server/process_request.c libs/exchange_message_wrapper/tcp_exchange_message_wrapper.c
+CLIENT_SRC = src/client/client.c libs/*
+SERVER_SRC = src/server/server.c src/server/database.c libs/*
 
 BIN_DIR = bin
 CLIENT_BIN = $(BIN_DIR)/client
