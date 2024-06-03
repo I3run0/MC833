@@ -89,7 +89,7 @@ int select_path_by_id(sqlite3 *db, const char *id, char *path) {
 }
 
 int delete_music(sqlite3 *db, const char *id) {
-    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id='%s';", id);
+    char *sql = sqlite3_mprintf("DELETE FROM musica WHERE id=%s;", id);
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;

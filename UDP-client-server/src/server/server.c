@@ -95,16 +95,13 @@ void delete_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char* 
         return;
     }
 
-    if (access(path, F_OK) != 0) {
-        strcpy(response, "\nERROR: DELETE: File associeted to id not foud\n\n");
-        send_message_w(sockfd, response, strlen(response), addr, addrlen);
-        return;
-    }
+    if (access(path, F_OK) == 0) {
+        if (remove(path) != 0) {
+            strcpy(response, "\nERROR: DELETE: Is not possible delete the song file\n\n");
+            send_message_w(sockfd, response, strlen(response), addr, addrlen);
+            return;
+        }
 
-    if (remove(path) != 0) {
-        strcpy(response, "\nERROR: DELETE: Is not possible delete the song file\n\n");
-        send_message_w(sockfd, response, strlen(response), addr, addrlen);
-        return;
     }
 
     int result = delete_music(db, id);
@@ -153,9 +150,10 @@ void help_request(int sockfd, struct sockaddr *addr, socklen_t addrlen) {
                          "    Syntax: SELECT columns WHERE filter\n"
                          "            OR\n"
                          "            SELECT columns\n"
+                         "    Available columns: id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento, caminho_do_arquivo\n"
                          "    Examples:\n"
                          "        SELECT * WHERE id='<value>'\n"
-                         "        SELECT title, artist WHERE genre='rock'\n"
+                         "        SELECT titulo, interprete, WHERE tipo_de_musica='rock'\n"
                          "DOWNLOAD: Download data from the database\n"
                          "    Syntax: DOWNLOAD '<id>'\n"
                          "\n";
