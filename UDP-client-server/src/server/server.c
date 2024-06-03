@@ -217,6 +217,14 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+// get sin_port, IPv4 or IPv6:
+uint16_t get_in_port(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+    return (((struct sockaddr_in6*)sa)->sin6_port);
+}
+
 int main(int argc, char *argv[]) {
     sqlite3 *server_database;
     int sockfd;
@@ -224,7 +232,7 @@ int main(int argc, char *argv[]) {
     int rv;
     struct sockaddr_storage client_addr;
     socklen_t client_addrlen;
-    char s[INET6_ADDRSTRLEN];
+    char addrs[INET6_ADDRSTRLEN];
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <database_path>\n", argv[0]);
@@ -275,10 +283,9 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         char* msg = recv_message_w(sockfd, (struct sockaddr *)&client_addr, &client_addrlen);
-        printf("listener: got packet from %s\n",
-        inet_ntop(client_addr.ss_family,
-            get_in_addr((struct sockaddr *)&client_addrlen),
-            s, sizeof s));
+        inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *)&client_addr), addrs, sizeof addrs);
+        int port = ntohs(get_in_port((struct sockaddr *)&client_addr));
+        printf("server: got connection from %s:%d\n", addrs, port);
         hendle_request(sockfd, (struct sockaddr *)&client_addr, client_addrlen, msg, server_database);
     }
     close(sockfd);
