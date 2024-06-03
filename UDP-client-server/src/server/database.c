@@ -9,14 +9,14 @@ int create_music_table(sqlite3 *db) {
                       "tipo_de_musica TEXT,"
                       "refrao TEXT,"
                       "ano_de_lancamento TEXT,"
-                      "caminho TEXT"
+                      "caminho_do_arquivo TEXT"
                       ");";
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     return result;
 }
 
 int insert_music(sqlite3 *db, const char *data) {
-    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento, caminho) VALUES (%s);", data);
+    char *sql = sqlite3_mprintf("INSERT INTO musica (id, titulo, interprete, idioma, tipo_de_musica, refrao, ano_de_lancamento, caminho_do_arquivo) VALUES (%s);", data);
     int result = sqlite3_exec(db, sql, NULL, NULL, NULL);
     sqlite3_free(sql);
     return result;
@@ -59,7 +59,7 @@ int select_music(sqlite3 *db, const char *fields, const char *filter, char *resu
 }
 
 int select_path_by_id(sqlite3 *db, const char *id, char *path) {
-    char *sql = sqlite3_mprintf("SELECT caminho FROM musica WHERE id='%s';", id);
+    char *sql = sqlite3_mprintf("SELECT caminho_do_arquivo FROM musica WHERE id=%s;", id);
     if (!sql) {
         return -1;
     }

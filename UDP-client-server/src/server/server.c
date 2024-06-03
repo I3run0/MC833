@@ -144,18 +144,20 @@ void select_request(int sockfd, struct sockaddr *addr, socklen_t addrlen, char *
 void help_request(int sockfd, struct sockaddr *addr, socklen_t addrlen) {
     char* response = "Available operations:\n"
                          "INSERT: Insert data into the database\n"
-                         "    Syntax: INSERT '<id>', '<titulo>', '<interprete>', '<idioma>', '<tipo_de_musica>', '<refrao>', '<ano_de_lancamento>', \n"
+                         "    Syntax: INSERT '<id>', '<titulo>', '<interprete>', '<idioma>', '<tipo_de_musica>', '<refrao>', '<ano_de_lancamento>', '<caminho_do_arquivo>' \n"
                          "    Examples:\n"
-                         "        INSERT 'a', 'b', 'c', 'd', 'f', 'g', 'h'\n"
+                         "        INSERT 'a', 'b', 'c', 'd', 'f', 'g', 'h', 'path/to/the/music.mp3\n"
                          "DELETE: Delete data from the database\n"
-                         "    Syntax: DELETE <id>\n"
+                         "    Syntax: DELETE '<id>'\n"
                          "SELECT: Select data from the database\n"
                          "    Syntax: SELECT columns WHERE filter\n"
                          "            OR\n"
                          "            SELECT columns\n"
                          "    Examples:\n"
                          "        SELECT * WHERE id='<value>'\n"
-                         "        SELECT title, artist WHERE genre='<value>'\n"
+                         "        SELECT title, artist WHERE genre='rock'\n"
+                         "DOWNLOAD: Download data from the database\n"
+                         "    Syntax: DOWNLOAD '<id>'\n"
                          "\n";
     send_message_w(sockfd, response, strlen(response), addr, addrlen);
 }
